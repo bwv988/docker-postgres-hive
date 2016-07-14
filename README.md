@@ -1,9 +1,9 @@
-# Docker for using PostgreSQL as metastore in Apache Hive.
+# Docker for PostgreSQL configured to be used as Metastore in Apache Hive
 
 ## Introduction
 
 This docker container extends the official PostgreSQL docker image **FIXME: insert link**. It adds schema files & creates users.
 
-## Usage
+## Usage examples
 
 **FIXME**
