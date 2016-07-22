@@ -36,13 +36,26 @@ CREATE TABLE "CDS" (
 
 
 --
+-- Name: COLUMNS_OLD; Type: TABLE; Schema: public; Owner: hiveuser; Tablespace:
+--
+
+CREATE TABLE "COLUMNS_OLD" (
+    "SD_ID" bigint NOT NULL,
+    "COMMENT" character varying(256) DEFAULT NULL::character varying,
+    "COLUMN_NAME" character varying(128) NOT NULL,
+    "TYPE_NAME" character varying(4000) NOT NULL,
+    "INTEGER_IDX" bigint NOT NULL
+);
+
+
+--
 -- Name: COLUMNS_V2; Type: TABLE; Schema: public; Owner: hiveuser; Tablespace:
 --
 
 CREATE TABLE "COLUMNS_V2" (
     "CD_ID" bigint NOT NULL,
     "COMMENT" character varying(4000),
-    "COLUMN_NAME" character varying(1000) NOT NULL,
+    "COLUMN_NAME" character varying(128) NOT NULL,
     "TYPE_NAME" character varying(4000),
     "INTEGER_IDX" integer NOT NULL
 );
@@ -217,7 +230,7 @@ CREATE TABLE "PARTITION_PARAMS" (
 
 CREATE TABLE "PART_COL_PRIVS" (
     "PART_COLUMN_GRANT_ID" bigint NOT NULL,
-    "COLUMN_NAME" character varying(1000) DEFAULT NULL::character varying,
+    "COLUMN_NAME" character varying(128) DEFAULT NULL::character varying,
     "CREATE_TIME" bigint NOT NULL,
     "GRANT_OPTION" smallint NOT NULL,
     "GRANTOR" character varying(128) DEFAULT NULL::character varying,
@@ -340,7 +353,7 @@ CREATE TABLE "SERDE_PARAMS" (
 
 CREATE TABLE "SORT_COLS" (
     "SD_ID" bigint NOT NULL,
-    "COLUMN_NAME" character varying(1000) DEFAULT NULL::character varying,
+    "COLUMN_NAME" character varying(128) DEFAULT NULL::character varying,
     "ORDER" bigint NOT NULL,
     "INTEGER_IDX" bigint NOT NULL
 );
@@ -382,7 +395,7 @@ CREATE TABLE "TBLS" (
 
 CREATE TABLE "TBL_COL_PRIVS" (
     "TBL_COLUMN_GRANT_ID" bigint NOT NULL,
-    "COLUMN_NAME" character varying(1000) DEFAULT NULL::character varying,
+    "COLUMN_NAME" character varying(128) DEFAULT NULL::character varying,
     "CREATE_TIME" bigint NOT NULL,
     "GRANT_OPTION" smallint NOT NULL,
     "GRANTOR" character varying(128) DEFAULT NULL::character varying,
@@ -486,7 +499,7 @@ CREATE TABLE "TAB_COL_STATS" (
  "CS_ID" bigint NOT NULL,
  "DB_NAME" character varying(128) DEFAULT NULL::character varying,
  "TABLE_NAME" character varying(128) DEFAULT NULL::character varying,
- "COLUMN_NAME" character varying(1000) DEFAULT NULL::character varying,
+ "COLUMN_NAME" character varying(128) DEFAULT NULL::character varying,
  "COLUMN_TYPE" character varying(128) DEFAULT NULL::character varying,
  "TBL_ID" bigint NOT NULL,
  "LONG_LOW_VALUE" bigint,
@@ -522,7 +535,7 @@ CREATE TABLE "PART_COL_STATS" (
  "DB_NAME" character varying(128) DEFAULT NULL::character varying,
  "TABLE_NAME" character varying(128) DEFAULT NULL::character varying,
  "PARTITION_NAME" character varying(767) DEFAULT NULL::character varying,
- "COLUMN_NAME" character varying(1000) DEFAULT NULL::character varying,
+ "COLUMN_NAME" character varying(128) DEFAULT NULL::character varying,
  "COLUMN_TYPE" character varying(128) DEFAULT NULL::character varying,
  "PART_ID" bigint NOT NULL,
  "LONG_LOW_VALUE" bigint,
@@ -566,25 +579,6 @@ CREATE TABLE "FUNC_RU" (
   PRIMARY KEY ("FUNC_ID", "INTEGER_IDX")
 );
 
-CREATE TABLE "NOTIFICATION_LOG"
-(
-    "NL_ID" BIGINT NOT NULL,
-    "EVENT_ID" BIGINT NOT NULL,
-    "EVENT_TIME" INTEGER NOT NULL,
-    "EVENT_TYPE" VARCHAR(32) NOT NULL,
-    "DB_NAME" VARCHAR(128),
-    "TBL_NAME" VARCHAR(128),
-    "MESSAGE" text,
-    PRIMARY KEY ("NL_ID")
-);
-
-CREATE TABLE "NOTIFICATION_SEQUENCE"
-(
-    "NNI_ID" BIGINT NOT NULL,
-    "NEXT_EVENT_ID" BIGINT NOT NULL,
-    PRIMARY KEY ("NNI_ID")
-);
-
 --
 -- Name: BUCKETING_COLS_pkey; Type: CONSTRAINT; Schema: public; Owner: hiveuser; Tablespace:
 --
@@ -607,6 +601,14 @@ ALTER TABLE ONLY "CDS"
 
 ALTER TABLE ONLY "COLUMNS_V2"
     ADD CONSTRAINT "COLUMNS_V2_pkey" PRIMARY KEY ("CD_ID", "COLUMN_NAME");
+
+
+--
+-- Name: COLUMNS_pkey; Type: CONSTRAINT; Schema: public; Owner: hiveuser; Tablespace:
+--
+
+ALTER TABLE ONLY "COLUMNS_OLD"
+    ADD CONSTRAINT "COLUMNS_pkey" PRIMARY KEY ("SD_ID", "COLUMN_NAME");
 
 
 --
@@ -938,6 +940,13 @@ CREATE INDEX "BUCKETING_COLS_N49" ON "BUCKETING_COLS" USING btree ("SD_ID");
 
 
 --
+-- Name: COLUMNS_N49; Type: INDEX; Schema: public; Owner: hiveuser; Tablespace:
+--
+
+CREATE INDEX "COLUMNS_N49" ON "COLUMNS_OLD" USING btree ("SD_ID");
+
+
+--
 -- Name: DATABASE_PARAMS_N49; Type: INDEX; Schema: public; Owner: hiveuser; Tablespace:
 --
 
@@ -1047,13 +1056,6 @@ CREATE INDEX "PART_COL_PRIVS_N49" ON "PART_COL_PRIVS" USING btree ("PART_ID");
 --
 
 CREATE INDEX "PART_PRIVS_N49" ON "PART_PRIVS" USING btree ("PART_ID");
-
-
---
--- Name: PCS_STATS_IDX; Type: INDEX; Schema: public; Owner: hiveuser; Tablespace:
---
-
-CREATE INDEX "PCS_STATS_IDX" ON "PART_COL_STATS" USING btree ("DB_NAME","TABLE_NAME","COLUMN_NAME","PARTITION_NAME");
 
 
 --
@@ -1204,6 +1206,14 @@ ALTER TABLE ONLY "SKEWED_VALUES"
 
 ALTER TABLE ONLY "BUCKETING_COLS"
     ADD CONSTRAINT "BUCKETING_COLS_SD_ID_fkey" FOREIGN KEY ("SD_ID") REFERENCES "SDS"("SD_ID") DEFERRABLE;
+
+
+--
+-- Name: COLUMNS_SD_ID_fkey; Type: FK CONSTRAINT; Schema: public; Owner: hiveuser
+--
+
+ALTER TABLE ONLY "COLUMNS_OLD"
+    ADD CONSTRAINT "COLUMNS_SD_ID_fkey" FOREIGN KEY ("SD_ID") REFERENCES "SDS"("SD_ID") DEFERRABLE;
 
 
 --
@@ -1442,16 +1452,87 @@ ALTER TABLE ONLY "FUNC_RU"
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
+
 --
 -- PostgreSQL database dump complete
 --
 
-------------------------------
+-- -----------------------------------------------------------------------------------------------------------------------------------------------
 -- Transaction and lock tables
-------------------------------
-\i hive-txn-schema-2.0.0.postgres.sql;
+-- These are not part of package jdo, so if you are going to regenerate this file you need to manually add the following section back to the file.
+-- -----------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE TXNS (
+  TXN_ID bigint PRIMARY KEY,
+  TXN_STATE char(1) NOT NULL,
+  TXN_STARTED bigint NOT NULL,
+  TXN_LAST_HEARTBEAT bigint NOT NULL,
+  TXN_USER varchar(128) NOT NULL,
+  TXN_HOST varchar(128) NOT NULL
+);
+
+CREATE TABLE TXN_COMPONENTS (
+  TC_TXNID bigint REFERENCES TXNS (TXN_ID),
+  TC_DATABASE varchar(128) NOT NULL,
+  TC_TABLE varchar(128),
+  TC_PARTITION varchar(767) DEFAULT NULL
+);
+
+CREATE TABLE COMPLETED_TXN_COMPONENTS (
+  CTC_TXNID bigint,
+  CTC_DATABASE varchar(128) NOT NULL,
+  CTC_TABLE varchar(128),
+  CTC_PARTITION varchar(767)
+);
+
+CREATE TABLE NEXT_TXN_ID (
+  NTXN_NEXT bigint NOT NULL
+);
+INSERT INTO NEXT_TXN_ID VALUES(1);
+
+CREATE TABLE HIVE_LOCKS (
+  HL_LOCK_EXT_ID bigint NOT NULL,
+  HL_LOCK_INT_ID bigint NOT NULL,
+  HL_TXNID bigint,
+  HL_DB varchar(128) NOT NULL,
+  HL_TABLE varchar(128),
+  HL_PARTITION varchar(767) DEFAULT NULL,
+  HL_LOCK_STATE char(1) NOT NULL,
+  HL_LOCK_TYPE char(1) NOT NULL,
+  HL_LAST_HEARTBEAT bigint NOT NULL,
+  HL_ACQUIRED_AT bigint,
+  HL_USER varchar(128) NOT NULL,
+  HL_HOST varchar(128) NOT NULL,
+  PRIMARY KEY(HL_LOCK_EXT_ID, HL_LOCK_INT_ID)
+); 
+
+CREATE INDEX HL_TXNID_INDEX ON HIVE_LOCKS USING hash (HL_TXNID);
+
+CREATE TABLE NEXT_LOCK_ID (
+  NL_NEXT bigint NOT NULL
+);
+INSERT INTO NEXT_LOCK_ID VALUES(1);
+
+CREATE TABLE COMPACTION_QUEUE (
+  CQ_ID bigint PRIMARY KEY,
+  CQ_DATABASE varchar(128) NOT NULL,
+  CQ_TABLE varchar(128) NOT NULL,
+  CQ_PARTITION varchar(767),
+  CQ_STATE char(1) NOT NULL,
+  CQ_TYPE char(1) NOT NULL,
+  CQ_WORKER_ID varchar(128),
+  CQ_START bigint,
+  CQ_RUN_AS varchar(128)
+);
+
+CREATE TABLE NEXT_COMPACTION_QUEUE_ID (
+  NCQ_NEXT bigint NOT NULL
+);
+INSERT INTO NEXT_COMPACTION_QUEUE_ID VALUES(1);
+
 
 -- -----------------------------------------------------------------
 -- Record schema version. Should be the last step in the init script
 -- -----------------------------------------------------------------
-INSERT INTO "VERSION" ("VER_ID", "SCHEMA_VERSION", "VERSION_COMMENT") VALUES (1, '2.0.0', 'Hive release version 2.0.0');
+INSERT INTO "VERSION" ("VER_ID", "SCHEMA_VERSION", "VERSION_COMMENT") VALUES (1, '0.13.0', 'Hive release version 0.13.0');
+
