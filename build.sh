@@ -11,5 +11,5 @@ function build_img() {
   docker build -t $img .
 }
 
-IMGPREFIX=analytics
+IMGPREFIX=bwv988
 build_img $IMGPREFIX postgres-hive
